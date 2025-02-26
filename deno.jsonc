@@ -1,0 +1,13 @@
+{
+  "imports": {
+    "mod.ts": "./example-mod.ts",
+    "external-module.js": "./example-external-module.ts"
+  },
+  "lint": {
+    "plugins": ["./lint-plugin.ts"]
+  },
+  "name": "@c-antin/lint-plugin-rust-style",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": "./lint-plugin.ts"
+}
