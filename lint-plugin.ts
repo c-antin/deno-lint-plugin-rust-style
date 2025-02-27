@@ -139,11 +139,6 @@ const check_ident_snake_cased_or_screaming_snake_cased = (
     node,
     message: to_message(node.name),
     hint: to_hint(node.name, ident_type) ?? "",
-    fix(fixer) {
-      // const original = context.sourceCode.getText(node);
-      // const newText = `{ ${original} }`;
-      return fixer.replaceText(node, to_snake_case(node.name));
-    },
   });
 };
 
@@ -160,6 +155,18 @@ export default {
           //     check_ident_snake_cased(id, context, "variable");
           //   }
           // },
+          "ClassBody PropertyDefinition"(node) { //todo: >
+            if (node.key.type !== "Identifier") return;
+            if (node.static) {
+              check_ident_snake_cased_or_screaming_snake_cased(
+                node.key,
+                context,
+                "variable_or_constant",
+              );
+            } else {
+              check_ident_snake_cased(node.key, context, "variable");
+            }
+          },
         };
       },
     },
