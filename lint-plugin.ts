@@ -1,3 +1,4 @@
+//todo: cleanup
 // loosely based on DestructuringFinder https://github.com/swc-project/swc/blob/e74929c01d2d8b9001bbc056f20ca8e1cb1c9a63/crates/swc_ecma_utils/src/lib.rs#L1520
 const find_lhs_pat_ids = (
   arr: (
@@ -54,6 +55,7 @@ const find_lhs_ids = (n: Deno.lint.Expression): Deno.lint.Identifier[] => {
   return [];
 };
 
+//todo: test helper functions
 const is_snake_cased = (ident_name: string) => {
   return !/[A-Z]/.test(ident_name);
 };
