@@ -62,6 +62,19 @@ const is_screaming_snake_cased = (ident_name: string) => {
   return !/[a-z]$/.test(ident_name);
 };
 
+const is_underscored = (ident_name: string) => {
+  const trimmed_ident = ident_name.replaceAll(/^_+|_+$/g, "");
+  return /_/.test(trimmed_ident) &&
+    trimmed_ident != trimmed_ident.toUpperCase();
+};
+
+const is_upper_camel_cased = (ident_name: string) => {
+  if (is_underscored(ident_name)) {
+    return false;
+  }
+  return /^[A-Z]/.test(ident_name);
+};
+
 const to_snake_case = (ident_name: string) => {
   const result = ident_name.replaceAll(
     /([a-z])([A-Z])/g,
@@ -77,12 +90,45 @@ const to_snake_case = (ident_name: string) => {
   return ident_name.toLowerCase();
 };
 
+const to_camel_case = (ident_name: string) => {
+  if (!is_underscored(ident_name)) {
+    return ident_name;
+  }
+
+  const result = ident_name.replaceAll(
+    /([^_])_([a-z])/g,
+    (_match, caps1, caps2) => {
+      return `${caps1}${caps2.toUpperCase()}`;
+    },
+  );
+
+  if (result != ident_name) {
+    return result;
+  }
+
+  return ident_name.toUpperCase();
+};
+
+const to_upper_camel_case = (ident_name: string) => {
+  const camel_cased = to_camel_case(ident_name);
+
+  const result = camel_cased.replace(/^_*[a-z]/, (match) => {
+    return match.toUpperCase();
+  });
+
+  if (result !== ident_name) {
+    return result;
+  }
+
+  return ident_name;
+};
+
 export type IdentToCheck =
   | "variable"
   | "variable_or_constant"
   | "object_key"
   | "function"
-  | "function_or_component"
+  | "component"
   | "class"
   | "type_alias"
   | "interface"
@@ -100,12 +146,19 @@ export const to_hint = (
 ) => {
   switch (ident_type) {
     case "variable":
-    case "function":
       return `Consider renaming \`${name}\` to \`${to_snake_case(name)}\``;
+    case "function":
+      return `Consider renaming \`${name}\` to \`${
+        to_snake_case(name)
+      }\` or adding an explicit return type of \`JSX.Element\`, if it is a component`;
     case "variable_or_constant": {
       const snake_cased = to_snake_case(name);
       return `Consider renaming \`${name}\` to \`${snake_cased}\` or \`${snake_cased.toUpperCase()}\``;
     }
+    case "component":
+      return `Consider renaming \`${name}\` to \`${
+        to_upper_camel_case(name)
+      }\``;
   }
 };
 
@@ -148,6 +201,34 @@ const check_ident_snake_cased_or_screaming_snake_cased = (
   });
 };
 
+const check_ident_upper_camel_cased = (
+  id: Deno.lint.Identifier,
+  context: Deno.lint.RuleContext,
+  ident_type: IdentToCheck,
+) => {
+  const node = id;
+  if (is_upper_camel_cased(node.name)) return;
+  context.report({
+    node,
+    message: to_message(node.name),
+    hint: to_hint(node.name, ident_type) ?? "",
+    fix(fixer) {
+      return fixer.replaceText(node, to_upper_camel_case(node.name));
+    },
+  });
+};
+
+const has_jsx_element_return_type = (type: Deno.lint.TSTypeAnnotation) => {
+  if (type.typeAnnotation.type !== "TSTypeReference") return false;
+  if (type.typeAnnotation.typeName.type !== "TSQualifiedName") return false;
+  if (type.typeAnnotation.typeName.left.type !== "Identifier") return false;
+  if (type.typeAnnotation.typeName.left.name !== "JSX") return false;
+  if (type.typeAnnotation.typeName.right.type !== "Identifier") return false;
+  if (type.typeAnnotation.typeName.right.name !== "Element") return false;
+  //todo: visit type unions
+  return true;
+};
+
 export default {
   name: "lint-plugin-rust-style",
   rules: {
@@ -182,7 +263,15 @@ export default {
           },
           FunctionDeclaration(node) {
             if (node.id === null) return;
-            check_ident_snake_cased(node.id, context, "function");
+            if (
+              typeof node.returnType !== "undefined" &&
+              /\.tsx$/.test(context.filename) &&
+              has_jsx_element_return_type(node.returnType)
+            ) {
+              check_ident_upper_camel_cased(node.id, context, "component");
+            } else {
+              check_ident_snake_cased(node.id, context, "function");
+            }
           },
         };
       },

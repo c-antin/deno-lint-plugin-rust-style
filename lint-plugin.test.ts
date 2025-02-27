@@ -128,3 +128,30 @@ Deno.test("function declaration invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("JSX component declaration valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "function Component(): JSX.Element {}",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("JSX component declaration invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.ts",
+    "function Component() {}",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("Component"));
+    assertEquals(d.hint, to_hint("Component", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});

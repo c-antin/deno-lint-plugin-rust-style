@@ -14,6 +14,8 @@ class camelCaseClass {}
 class Also_Not_Valid_Class {}
 
 function foo({ camelCase = "default value" }) {}
+function Component() {}
+function component(): JSX.Element {}
 
 enum snake_case_enum {
   snake_case_variant,
@@ -36,7 +38,7 @@ interface camelCasedInterface {
 }
 
 //valid
-import { camelCased } from "external-module.js"; // valid, because one has no control over the identifier
+import { camelCased, JSX } from "external-module.js"; // valid, because one has no control over the identifier
 import { camelCased as not_camel_cased } from "external-module.js";
 export * as not_camel_cased from "mod.ts";
 
@@ -54,6 +56,7 @@ doSomething(); // ...camel_case function calls are allowed
   const { lastName: last_name } = obj1;
 
   function foo({ camelCase: snake_case = "default value" }) {}
+  function Component(): JSX.Element {}
 
   class PascalCaseClass {}
 
