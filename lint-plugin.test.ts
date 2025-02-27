@@ -3,7 +3,7 @@ import plugin, { to_message } from "./lint-plugin.ts";
 
 const ID = "lint-plugin-rust-style/rust-style";
 
-Deno.test("valid assignment", () => {
+Deno.test.ignore("valid assignment", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.ts",
@@ -13,7 +13,7 @@ Deno.test("valid assignment", () => {
   assertEquals(diagnostics.length, 0);
 });
 
-Deno.test("invalid assignment", () => {
+Deno.test.ignore("invalid assignment", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.ts",

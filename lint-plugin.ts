@@ -153,12 +153,13 @@ export default {
     "rust-style": {
       create(context) {
         return {
-          AssignmentExpression(node) {
-            const ids = find_lhs_ids(node.left);
-            for (const id of ids) {
-              check_ident_snake_cased(id, context, "variable");
-            }
-          },
+          // assignment expression can be arbitrary, the declaration is what matters
+          // AssignmentExpression(node) {
+          //   const ids = find_lhs_ids(node.left);
+          //   for (const id of ids) {
+          //     check_ident_snake_cased(id, context, "variable");
+          //   }
+          // },
         };
       },
     },
