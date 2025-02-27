@@ -146,19 +146,19 @@ export const to_hint = (
 ) => {
   switch (ident_type) {
     case "variable":
-      return `Consider renaming \`${name}\` to \`${to_snake_case(name)}\``;
+      return `Consider renaming \`${name}\` to \`${to_snake_case(name)}\`.`;
     case "function":
       return `Consider renaming \`${name}\` to \`${
         to_snake_case(name)
-      }\` or adding an explicit return type of \`JSX.Element\`, if it is a component`;
+      }\` or adding an explicit return type of \`JSX.Element\`, if it is a component.`;
     case "variable_or_constant": {
       const snake_cased = to_snake_case(name);
-      return `Consider renaming \`${name}\` to \`${snake_cased}\` or \`${snake_cased.toUpperCase()}\``;
+      return `Consider renaming \`${name}\` to \`${snake_cased}\` or \`${snake_cased.toUpperCase()}\`.`;
     }
     case "component":
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
-      }\``;
+      }\`.`;
   }
 };
 
