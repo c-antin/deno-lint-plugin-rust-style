@@ -77,7 +77,7 @@ const to_snake_case = (ident_name: string) => {
   return ident_name.toLowerCase();
 };
 
-type IdentToCheck =
+export type IdentToCheck =
   | "variable"
   | "variable_or_constant"
   | "object_key"
@@ -94,12 +94,13 @@ export const to_message = (
   return `Identifier '${name}' is not in rust style.`;
 };
 
-const to_hint = (
+export const to_hint = (
   name: string,
   ident_type: IdentToCheck,
 ) => {
   switch (ident_type) {
     case "variable":
+    case "function":
       return `Consider renaming \`${name}\` to \`${to_snake_case(name)}\``;
     case "variable_or_constant": {
       const snake_cased = to_snake_case(name);
@@ -109,7 +110,7 @@ const to_hint = (
 };
 
 const check_ident_snake_cased = (
-  id: Deno.lint.Identifier,
+  id: Deno.lint.Identifier | Deno.lint.PrivateIdentifier,
   context: Deno.lint.RuleContext,
   ident_type: IdentToCheck,
 ) => {
@@ -122,7 +123,12 @@ const check_ident_snake_cased = (
     fix(fixer) {
       // const original = context.sourceCode.getText(node);
       // const newText = `{ ${original} }`;
-      return fixer.replaceText(node, to_snake_case(node.name));
+      return fixer.replaceText(
+        node,
+        id.type === "PrivateIdentifier"
+          ? "#" + to_snake_case(node.name)
+          : to_snake_case(node.name),
+      );
     },
   });
 };
@@ -166,6 +172,13 @@ export default {
             } else {
               check_ident_snake_cased(node.key, context, "variable");
             }
+          },
+          "ClassBody MethodDefinition"(node) { //todo: >
+            if (
+              node.key.type !== "Identifier" &&
+              node.key.type !== "PrivateIdentifier"
+            ) return;
+            check_ident_snake_cased(node.key, context, "function");
           },
         };
       },
