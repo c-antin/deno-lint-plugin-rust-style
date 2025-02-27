@@ -101,3 +101,30 @@ Deno.test("class method invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("function declaration valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.ts",
+    "function function_valid() {}",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("function declaration invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.ts",
+    "function functionInvalid() {}",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("functionInvalid"));
+    assertEquals(d.hint, to_hint("functionInvalid", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});

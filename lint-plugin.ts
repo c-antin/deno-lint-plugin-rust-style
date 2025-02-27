@@ -180,6 +180,10 @@ export default {
             ) return;
             check_ident_snake_cased(node.key, context, "function");
           },
+          FunctionDeclaration(node) {
+            if (node.id === null) return;
+            check_ident_snake_cased(node.id, context, "function");
+          },
         };
       },
     },
