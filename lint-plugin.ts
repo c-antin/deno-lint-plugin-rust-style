@@ -158,6 +158,7 @@ export const to_hint = (
       return `Consider renaming \`${name}\` to \`${snake_cased}\` or \`${snake_cased.toUpperCase()}\`.`;
     }
     case "component":
+    case "class":
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
@@ -274,6 +275,10 @@ export default {
             } else {
               check_ident_snake_cased(node.id, context, "function");
             }
+          },
+          ClassDeclaration(node) {
+            if (node.id === null) return;
+            check_ident_upper_camel_cased(node.id, context, "class");
           },
         };
       },

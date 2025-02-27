@@ -155,3 +155,30 @@ Deno.test("JSX component declaration invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("class declaration valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.ts",
+    "class ClassValid {}",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("class declaration invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.ts",
+    "class class_invalid {}",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("class_inalid"));
+    assertEquals(d.hint, to_hint("class_inalid", "class"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
