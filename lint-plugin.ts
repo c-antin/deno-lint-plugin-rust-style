@@ -155,7 +155,7 @@ export default {
           //     check_ident_snake_cased(id, context, "variable");
           //   }
           // },
-          "ClassBody PropertyDefinition"(node) { //todo: >
+          "ClassBody PropertyDefinition"(node) { //todo: >; PrivateIdentifier
             if (node.key.type !== "Identifier") return;
             if (node.static) {
               check_ident_snake_cased_or_screaming_snake_cased(
