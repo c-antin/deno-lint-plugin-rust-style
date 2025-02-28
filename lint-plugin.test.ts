@@ -6,7 +6,7 @@ const ID = "lint-plugin-rust-style/rust-style";
 Deno.test.ignore("valid assignment", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     'valid_assignment = "Ichigo";',
   );
 
@@ -16,7 +16,7 @@ Deno.test.ignore("valid assignment", () => {
 Deno.test.ignore("invalid assignment", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     'invalidAssignment = "Ichigo";',
   );
 
@@ -30,7 +30,7 @@ Deno.test.ignore("invalid assignment", () => {
 Deno.test("class prop valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class Test { static STATIC_PROP_VALID = 1; prop_valid = 2; }",
   );
 
@@ -40,7 +40,7 @@ Deno.test("class prop valid", () => {
 Deno.test("class prop invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class Test { static staticPropInvalid = 1; propInvalid = 2; }",
   );
 
@@ -64,7 +64,7 @@ Deno.test("class prop invalid", () => {
 Deno.test("class method valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class Test { static static_method_valid() {} method_valid() {} }",
   );
 
@@ -74,7 +74,7 @@ Deno.test("class method valid", () => {
 Deno.test("class method invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class Test { static staticMethodInvalid() {} methodInvalid() {} #methodInvalid() {} }",
   );
 
@@ -105,7 +105,7 @@ Deno.test("class method invalid", () => {
 Deno.test("function declaration valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "function function_valid() {}",
   );
 
@@ -115,7 +115,7 @@ Deno.test("function declaration valid", () => {
 Deno.test("function declaration invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "function functionInvalid() {}",
   );
 
@@ -142,7 +142,7 @@ Deno.test("JSX component declaration valid", () => {
 Deno.test("JSX component declaration invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "function Component() {}",
   );
 
@@ -159,7 +159,7 @@ Deno.test("JSX component declaration invalid", () => {
 Deno.test("class declaration valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class ClassValid {}",
   );
 
@@ -169,7 +169,7 @@ Deno.test("class declaration valid", () => {
 Deno.test("class declaration invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "class class_invalid {}",
   );
 
@@ -186,7 +186,7 @@ Deno.test("class declaration invalid", () => {
 Deno.test("variable declaration valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "const variable_valid1 = 1; let variable_valid2 = 2; var variable_valid3 = 3; const CONSTANT_VALID = 4;",
   );
 
@@ -196,7 +196,7 @@ Deno.test("variable declaration valid", () => {
 Deno.test("variable declaration invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
-    "main.ts",
+    "main.tsx",
     "const variableInvalid1 = 1; let variableInvalid2 = 2; var variableInvalid3 = 3;",
   );
 
