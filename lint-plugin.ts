@@ -61,7 +61,7 @@ const is_snake_cased = (ident_name: string) => {
 };
 
 const is_screaming_snake_cased = (ident_name: string) => {
-  return !/[a-z]$/.test(ident_name);
+  return !/[a-z]/.test(ident_name);
 };
 
 const is_underscored = (ident_name: string) => {
@@ -125,16 +125,30 @@ const to_upper_camel_case = (ident_name: string) => {
   return ident_name;
 };
 
+const string_repr = (prop: Deno.lint.Expression) => {
+  switch (prop.type) {
+    case "Identifier":
+      return prop.name;
+    default:
+      console.info("rust-style: ignored prop", prop);
+      return null;
+  }
+};
+
+interface ObjectPat {
+  key_name: string;
+  value_name: string | null;
+  has_default: boolean;
+  in_var_declarator: boolean;
+}
+
 export type IdentToCheck =
   | "variable"
   | "variable_or_constant"
-  | "object_key"
   | "function"
   | "component"
   | "class"
-  | "type_alias"
-  | "interface"
-  | "enum_name";
+  | ObjectPat;
 
 export const to_message = (
   name: string,
@@ -162,6 +176,36 @@ export const to_hint = (
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
+    default:
+      if (typeof ident_type === "object") {
+        const { key_name, value_name, has_default, in_var_declarator } =
+          ident_type;
+        let rename_name;
+        if (value_name !== null) {
+          rename_name = value_name;
+        } else if (in_var_declarator) {
+          rename_name = null;
+        } else {
+          rename_name = key_name;
+        }
+        if (rename_name !== null) {
+          return `Consider renaming \`${rename_name}\` to \`${
+            to_snake_case(rename_name)
+          }\`.`;
+        }
+
+        if (has_default) {
+          return `Consider replacing \`{{ ${key_name} = .. }}\` with \`{{ ${key_name}: ${
+            to_snake_case(key_name)
+          } = .. }}\`.`;
+        }
+
+        return `Consider replacing \`{{ ${key_name} }}\` with \`{{ ${key_name}: ${
+          to_snake_case(key_name)
+        } }}\`.`;
+      }
+      console.info("rust-style: ignored hint", ident_type);
+      return null;
   }
 };
 
@@ -176,7 +220,7 @@ const check_ident_snake_cased = (
     node,
     message: to_message(node.name),
     hint: to_hint(node.name, ident_type) ?? "",
-    fix(fixer) {
+    fix: typeof ident_type === "object" ? undefined : (fixer) => {
       // const original = context.sourceCode.getText(node);
       // const newText = `{ ${original} }`;
       return fixer.replaceText(
@@ -232,6 +276,122 @@ const has_jsx_element_return_type = (type: Deno.lint.TSTypeAnnotation) => {
   return true;
 };
 
+const check_pat = (
+  pat:
+    | Deno.lint.ArrayPattern
+    | Deno.lint.Identifier
+    | Deno.lint.MemberExpression
+    | Deno.lint.ObjectPattern
+    | Deno.lint.AssignmentPattern
+    | Deno.lint.RestElement
+    | null,
+  context: Deno.lint.RuleContext,
+  kind?: Deno.lint.VariableDeclaration["kind"],
+) => {
+  if (pat === null) return;
+  switch (pat.type) {
+    case "Identifier": {
+      // deno-lint-ignore no-explicit-any
+      const var_declarator = (pat as any).parent;
+      if (var_declarator?.type === "VariableDeclarator") {
+        if (kind === "const") {
+          const node = var_declarator.init;
+          if (
+            node?.type === "FunctionExpression" ||
+            node?.type === "ArrowFunctionExpression"
+          ) {
+            if (
+              typeof node.returnType !== "undefined" &&
+              /\.tsx$/.test(context.filename) &&
+              has_jsx_element_return_type(node.returnType)
+            ) {
+              check_ident_upper_camel_cased(pat, context, "component");
+            } else {
+              check_ident_snake_cased(pat, context, "function");
+            }
+          } else {
+            check_ident_snake_cased_or_screaming_snake_cased(
+              pat,
+              context,
+              "variable_or_constant",
+            );
+          }
+        } else {
+          check_ident_snake_cased(pat, context, "variable");
+        }
+      } else {
+        check_ident_snake_cased(pat, context, "variable");
+      }
+      break;
+    }
+    case "ArrayPattern":
+      for (const el of pat.elements) {
+        check_pat(el, context, kind);
+      }
+      break;
+    case "RestElement":
+      check_pat(pat.argument, context, kind);
+      break;
+    case "ObjectPattern":
+      for (const prop of pat.properties) {
+        switch (prop.type) {
+          //todo: handle object pat assignment
+          case "Property": {
+            const key = prop.key;
+            const value = prop.value;
+            if (value === null) break; //todo: apparently this is possible
+            switch (value.type) {
+              case "Identifier":
+                check_ident_snake_cased(value, context, {
+                  key_name: string_repr(key) ?? "[KEY]",
+                  value_name: value.name,
+                  has_default: false,
+                  in_var_declarator: typeof kind !== "undefined",
+                });
+                break;
+              case "AssignmentPattern":
+                if (value.left.type === "Identifier") {
+                  check_ident_snake_cased(value.left, context, {
+                    key_name: string_repr(key) ?? "[KEY]",
+                    value_name: value.left.name,
+                    has_default: true,
+                    in_var_declarator: typeof kind !== "undefined",
+                  });
+                  break;
+                }
+                /* falls through */
+              case "ArrayPattern":
+              case "ObjectPattern": {
+                check_pat(value, context, kind);
+                break;
+              }
+              case "Literal":
+                //ignore
+                break;
+              default:
+                //ignore
+                console.info("rust-style: ignored pat value", pat, value);
+                break;
+            }
+            break;
+          }
+          case "RestElement": {
+            check_pat(prop.argument, context, kind);
+            break;
+          }
+        }
+      }
+      break;
+    case "AssignmentPattern":
+      check_pat(pat.left, context, kind);
+      break;
+    default:
+      //ignore
+      console.info("rust-style: ignored pat", pat);
+      break;
+  }
+};
+
 export default {
   name: "lint-plugin-rust-style",
   rules: {
@@ -279,6 +439,11 @@ export default {
           ClassDeclaration(node) {
             if (node.id === null) return;
             check_ident_upper_camel_cased(node.id, context, "class");
+          },
+          VariableDeclaration(node) {
+            for (const decl of node.declarations) {
+              check_pat(decl.id, context, node.kind);
+            }
           },
         };
       },
