@@ -291,36 +291,12 @@ const check_pat = (
   if (pat === null) return;
   switch (pat.type) {
     case "Identifier": {
-      // deno-lint-ignore no-explicit-any
-      const var_declarator = (pat as any).parent;
-      if (var_declarator?.type === "VariableDeclarator") {
-        if (kind === "const") {
-          const node = var_declarator.init;
-          if (
-            node?.type === "FunctionExpression" ||
-            node?.type === "ArrowFunctionExpression"
-          ) {
-            if (
-              typeof node.returnType !== "undefined" &&
-              /\.tsx$/.test(context.filename) &&
-              has_jsx_element_return_type(node.returnType)
-            ) {
-              check_ident_upper_camel_cased(pat, context, "component");
-            } else {
-              check_ident_snake_cased(pat, context, "function");
-            }
-          } else if (node?.type === "ClassExpression") {
-            check_ident_upper_camel_cased(pat, context, "class");
-          } else {
-            check_ident_snake_cased_or_screaming_snake_cased(
-              pat,
-              context,
-              "variable_or_constant",
-            );
-          }
-        } else {
-          check_ident_snake_cased(pat, context, "variable");
-        }
+      if (kind === "const") {
+        check_ident_snake_cased_or_screaming_snake_cased(
+          pat,
+          context,
+          "variable_or_constant",
+        );
       } else {
         check_ident_snake_cased(pat, context, "variable");
       }
@@ -444,7 +420,7 @@ export default {
           },
           VariableDeclaration(node) {
             for (const decl of node.declarations) {
-              check_pat(decl.id, context, node.kind);
+              let checked_ident = false;
 
               if (decl.init !== null) {
                 switch (decl.init.type) {
@@ -461,27 +437,59 @@ export default {
                     }
                     break;
                   case "FunctionExpression":
-                    if (decl.init.id !== null) {
+                  case "ArrowFunctionExpression":
+                    if (
+                      decl.init.id !== null &&
+                      typeof decl.init.id !== "undefined"
+                    ) {
                       check_ident_snake_cased(
                         decl.init.id,
                         context,
                         "function",
                       );
                     }
+                    if (decl.id.type === "Identifier") {
+                      const node = decl.init;
+                      if (
+                        typeof node.returnType !== "undefined" &&
+                        /\.tsx$/.test(context.filename) &&
+                        has_jsx_element_return_type(node.returnType)
+                      ) {
+                        check_ident_upper_camel_cased(
+                          decl.id,
+                          context,
+                          "component",
+                        );
+                      } else {
+                        check_ident_snake_cased(decl.id, context, "function");
+                      }
+                      checked_ident = true;
+                    }
                     break;
                   case "ClassExpression":
-                    if (decl.init.id !== null) {
+                    if (
+                      decl.init.id !== null &&
+                      typeof decl.init.id !== "undefined"
+                    ) {
                       check_ident_upper_camel_cased(
                         decl.init.id,
                         context,
                         "class",
                       );
                     }
+                    if (decl.id.type === "Identifier") {
+                      check_ident_upper_camel_cased(decl.id, context, "class");
+                      checked_ident = true;
+                    }
                     break;
                   default:
                     //ignore
                     break;
                 }
+              }
+
+              if (!checked_ident) {
+                check_pat(decl.id, context, node.kind);
               }
             }
           },
