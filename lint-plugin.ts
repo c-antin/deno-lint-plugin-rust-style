@@ -148,6 +148,8 @@ export type IdentToCheck =
   | "function"
   | "component"
   | "class"
+  | "object_key"
+  | "object_key_shorthand"
   | ObjectPat;
 
 export const to_message = (
@@ -176,6 +178,14 @@ export const to_hint = (
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
+    case "object_key":
+      return `Consider renaming \`${name}\` to \`${
+        to_snake_case(name)
+      }\`, or wrapping it in quotation mark like \`"${name}"\``;
+    case "object_key_shorthand":
+      return `Consider writing \`${
+        to_snake_case(name)
+      }: ${name}\` or \`"${name}": ${name}\``;
     default:
       if (typeof ident_type === "object") {
         const { key_name, value_name, has_default, in_var_declarator } =
@@ -428,7 +438,21 @@ export default {
                     for (const prop of decl.init.properties) {
                       switch (prop.type) {
                         case "Property":
-                          console.info("rust-style: ignored prop", prop);
+                          if (prop.key.type === "Identifier") {
+                            if (prop.shorthand) {
+                              check_ident_snake_cased(
+                                prop.key,
+                                context,
+                                "object_key_shorthand",
+                              );
+                            } else {
+                              check_ident_snake_cased(
+                                prop.key,
+                                context,
+                                "object_key",
+                              );
+                            }
+                          }
                           break;
                         default:
                           //ignore

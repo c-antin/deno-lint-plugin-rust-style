@@ -526,3 +526,37 @@ Deno.test("variable class init invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("variable object init valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    'const obj = {a_valid, b_valid: 2, "cValid": 3, ...rest_valid};',
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("variable object init invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "const obj = {aInvalid, bInvalid: 2, ...restValid};",
+  );
+
+  assertEquals(diagnostics.length, 2);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("aInvalid"));
+    assertEquals(d.hint, to_hint("aInvalid", "object_key_shorthand"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("bInvalid"));
+    assertEquals(d.hint, to_hint("bInvalid", "object_key"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
