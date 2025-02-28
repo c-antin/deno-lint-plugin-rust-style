@@ -309,6 +309,8 @@ const check_pat = (
             } else {
               check_ident_snake_cased(pat, context, "function");
             }
+          } else if (node?.type === "ClassExpression") {
+            check_ident_upper_camel_cased(pat, context, "class");
           } else {
             check_ident_snake_cased_or_screaming_snake_cased(
               pat,

@@ -514,7 +514,7 @@ Deno.test("variable class init valid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.tsx",
-    "const func_valid = class StillValid { };",
+    "const ClassValid = class StillValid { };",
   );
 
   assertEquals(diagnostics.length, 0);
@@ -524,12 +524,19 @@ Deno.test("variable class init invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.tsx",
-    "const func_valid = class still_invalid { };",
+    "const class_invalid = class still_invalid { };",
   );
 
-  assertEquals(diagnostics.length, 1);
+  assertEquals(diagnostics.length, 2);
   {
     const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("class_invalid"));
+    assertEquals(d.hint, to_hint("class_invalid", "class"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("still_invalid"));
     assertEquals(d.hint, to_hint("still_invalid", "class"));
