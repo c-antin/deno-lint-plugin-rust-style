@@ -294,6 +294,7 @@ const check_pat = (
     | Deno.lint.ObjectPattern
     | Deno.lint.AssignmentPattern
     | Deno.lint.RestElement
+    | Deno.lint.TSParameterProperty
     | null,
   context: Deno.lint.RuleContext,
   kind?: Deno.lint.VariableDeclaration["kind"],
@@ -327,39 +328,44 @@ const check_pat = (
           case "Property": {
             const key = prop.key;
             const value = prop.value;
-            if (value === null) break; //todo: apparently this is possible
-            switch (value.type) {
-              case "Identifier":
-                check_ident_snake_cased(value, context, {
-                  key_name: string_repr(key) ?? "[KEY]",
-                  value_name: value.name,
-                  has_default: false,
-                  in_var_declarator: typeof kind !== "undefined",
-                });
-                break;
-              case "AssignmentPattern":
-                if (value.left.type === "Identifier") {
-                  check_ident_snake_cased(value.left, context, {
+            if (value === null) { //todo: apparently this is possible
+              if (key.type === "Identifier" && typeof kind === "undefined") { //todo: apparently this is possible, too
+                check_ident_snake_cased(key, context, "variable");
+              }
+            } else {
+              switch (value.type) {
+                case "Identifier":
+                  check_ident_snake_cased(value, context, {
                     key_name: string_repr(key) ?? "[KEY]",
-                    value_name: value.left.name,
-                    has_default: true,
+                    value_name: value.name,
+                    has_default: false,
                     in_var_declarator: typeof kind !== "undefined",
                   });
                   break;
+                case "AssignmentPattern":
+                  if (value.left.type === "Identifier") {
+                    check_ident_snake_cased(value.left, context, {
+                      key_name: string_repr(key) ?? "[KEY]",
+                      value_name: value.left.name,
+                      has_default: true,
+                      in_var_declarator: typeof kind !== "undefined",
+                    });
+                    break;
+                  }
+                  /* falls through */
+                case "ArrayPattern":
+                case "ObjectPattern": {
+                  check_pat(value, context, kind);
+                  break;
                 }
-                /* falls through */
-              case "ArrayPattern":
-              case "ObjectPattern": {
-                check_pat(value, context, kind);
-                break;
+                case "Literal":
+                  //ignore
+                  break;
+                default:
+                  //ignore
+                  console.info("rust-style: ignored pat value", pat, value);
+                  break;
               }
-              case "Literal":
-                //ignore
-                break;
-              default:
-                //ignore
-                console.info("rust-style: ignored pat value", pat, value);
-                break;
             }
             break;
           }
@@ -422,6 +428,10 @@ export default {
               check_ident_upper_camel_cased(node.id, context, "component");
             } else {
               check_ident_snake_cased(node.id, context, "function");
+            }
+            //todo: check arrow params
+            for (const param of node.params) {
+              check_pat(param, context);
             }
           },
           ClassDeclaration(node) {

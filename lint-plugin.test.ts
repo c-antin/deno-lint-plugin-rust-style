@@ -560,3 +560,68 @@ Deno.test("variable object init invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("function param valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    'function func_valid(param_valid, { key_valid: [arr_valid], "keyValid": [arr_valid] }, ...rest_valid) { }',
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("function param invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "function func_valid(paramInvalid, { keyIrrelevant: [arrInvalid], ...restInvalid }, ...argsInvalid) {}",
+  );
+
+  assertEquals(diagnostics.length, 4);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("paramInvalid"));
+    assertEquals(d.hint, to_hint("paramInvalid", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("arrInvalid"));
+    assertEquals(d.hint, to_hint("arrInvalid", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[2];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("restInvalid"));
+    assertEquals(d.hint, to_hint("restInvalid", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[3];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("argsInvalid"));
+    assertEquals(d.hint, to_hint("argsInvalid", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
+
+Deno.test("function param object destruct invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "function func({ camelCase }) { }",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("camelCase"));
+    assertEquals(d.hint, to_hint("camelCase", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
