@@ -482,3 +482,57 @@ Deno.test("variable nested object pattern invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("variable function init valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "const func_valid = function still_valid() { };",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("variable function init invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "const func_valid = function stillInvalid() { };",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("stillInvalid"));
+    assertEquals(d.hint, to_hint("stillInvalid", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
+
+Deno.test("variable class init valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "const func_valid = class StillValid { };",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("variable class init invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "const func_valid = class still_invalid { };",
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("still_invalid"));
+    assertEquals(d.hint, to_hint("still_invalid", "class"));
+    assert(typeof d.fix !== "undefined");
+  }
+});

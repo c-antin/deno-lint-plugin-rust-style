@@ -130,7 +130,7 @@ const string_repr = (prop: Deno.lint.Expression) => {
     case "Identifier":
       return prop.name;
     default:
-      console.info("rust-style: ignored prop", prop);
+      console.info("rust-style: string_repr: ignored prop", prop);
       return null;
   }
 };
@@ -443,6 +443,44 @@ export default {
           VariableDeclaration(node) {
             for (const decl of node.declarations) {
               check_pat(decl.id, context, node.kind);
+
+              if (decl.init !== null) {
+                switch (decl.init.type) {
+                  case "ObjectExpression":
+                    for (const prop of decl.init.properties) {
+                      switch (prop.type) {
+                        case "Property":
+                          console.info("rust-style: ignored prop", prop);
+                          break;
+                        default:
+                          //ignore
+                          break;
+                      }
+                    }
+                    break;
+                  case "FunctionExpression":
+                    if (decl.init.id !== null) {
+                      check_ident_snake_cased(
+                        decl.init.id,
+                        context,
+                        "function",
+                      );
+                    }
+                    break;
+                  case "ClassExpression":
+                    if (decl.init.id !== null) {
+                      check_ident_upper_camel_cased(
+                        decl.init.id,
+                        context,
+                        "class",
+                      );
+                    }
+                    break;
+                  default:
+                    //ignore
+                    break;
+                }
+              }
             }
           },
         };
