@@ -815,3 +815,30 @@ Deno.test("enum invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("export all valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    'export * as snake_cased from "mod.ts"; export * as SCREAMING_SNAKE_CASED from "mod.ts";',
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("export all invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    'export * as camelCased from "mod.ts";',
+  );
+
+  assertEquals(diagnostics.length, 1);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("camelCased"));
+    assertEquals(d.hint, to_hint("camelCased", "variable_or_constant"));
+    assert(typeof d.fix !== "undefined");
+  }
+});

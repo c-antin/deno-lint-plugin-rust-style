@@ -612,7 +612,20 @@ export default {
               }
             }
           },
-          //todo: import export
+          //todo: import
+          ExportAllDeclaration(node) {
+            //todo: exported and source are swapped
+            const exported = node.source as unknown as
+              | Deno.lint.Identifier
+              | null;
+            if (exported?.type === "Identifier") {
+              check_ident_snake_cased_or_screaming_snake_cased(
+                exported,
+                context,
+                "variable_or_constant",
+              );
+            }
+          },
           TSTypeAliasDeclaration(node) {
             check_ident_upper_camel_cased(node.id, context, "type_alias");
             check_ts_type(node.typeAnnotation, context);
