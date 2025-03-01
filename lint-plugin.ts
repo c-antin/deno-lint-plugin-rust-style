@@ -150,6 +150,7 @@ export type IdentToCheck =
   | "class"
   | "object_key"
   | "object_key_shorthand"
+  | "type_alias"
   | ObjectPat;
 
 export const to_message = (
@@ -175,6 +176,7 @@ export const to_hint = (
     }
     case "component":
     case "class":
+    case "type_alias":
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
@@ -391,6 +393,58 @@ const check_pat = (
   }
 };
 
+const check_ts_type_element = (
+  node:
+    | Deno.lint.TSCallSignatureDeclaration
+    | Deno.lint.TSPropertySignature
+    | Deno.lint.TSConstructSignatureDeclaration
+    | Deno.lint.TSMethodSignature
+    | Deno.lint.TSIndexSignature,
+  context: Deno.lint.RuleContext,
+) => {
+  switch (node.type) {
+    case "TSPropertySignature": {
+      const sig = node;
+      if (sig.key.type === "Identifier") {
+        check_ident_snake_cased(
+          sig.key,
+          context,
+          "object_key",
+        );
+      }
+      if (typeof sig.typeAnnotation !== "undefined") {
+        check_ts_type(sig.typeAnnotation.typeAnnotation, context);
+      }
+      break;
+    }
+    case "TSMethodSignature": {
+      const sig = node;
+      if (sig.key.type === "Identifier") {
+        check_ident_snake_cased(sig.key, context, "function");
+      }
+      //todo: params?
+      break;
+    }
+    //todo: getter setter?
+    case "TSIndexSignature":
+    case "TSCallSignatureDeclaration":
+    case "TSConstructSignatureDeclaration":
+      //ignore
+      break;
+  }
+};
+
+const check_ts_type = (
+  node: Deno.lint.TypeNode,
+  context: Deno.lint.RuleContext,
+) => {
+  if (node.type === "TSTypeLiteral") {
+    for (const member of node.members) {
+      check_ts_type_element(member, context);
+    }
+  }
+};
+
 export default {
   name: "lint-plugin-rust-style",
   rules: {
@@ -540,6 +594,11 @@ export default {
                 check_pat(decl.id, context, node.kind);
               }
             }
+          },
+          //todo: import export
+          TSTypeAliasDeclaration(node) {
+            check_ident_upper_camel_cased(node.id, context, "type_alias");
+            check_ts_type(node.typeAnnotation, context);
           },
         };
       },

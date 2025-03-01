@@ -667,3 +667,44 @@ Deno.test("function expression param invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("type alias valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "type ValidType = { prop_valid: number, method_valid(): void };",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("type alias invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "type invalidType = { propInvalid: number, methodInvalid(): void };",
+  );
+
+  assertEquals(diagnostics.length, 3);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("invalidType"));
+    assertEquals(d.hint, to_hint("invalidType", "type_alias"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("propInvalid"));
+    assertEquals(d.hint, to_hint("propInvalid", "object_key"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[2];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("methodInvalid"));
+    assertEquals(d.hint, to_hint("methodInvalid", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
