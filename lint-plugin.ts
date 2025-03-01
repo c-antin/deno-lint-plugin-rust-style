@@ -612,10 +612,7 @@ const create_visitor = (
   };
 };
 
-/**
- * A lint rule to check if the identifiers are in rust style.
- */
-export default {
+const plugin: Deno.lint.Plugin = {
   name: "lint-plugin-rust-style",
   rules: {
     "rust-style": {
@@ -623,3 +620,8 @@ export default {
     },
   },
 };
+
+/**
+ * A lint rule to check if the identifiers are in rust style.
+ */
+export default plugin;
