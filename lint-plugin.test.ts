@@ -613,10 +613,10 @@ Deno.test("function param object destruct invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.tsx",
-    "function func({ camelCase }) { }",
+    'function func({ camelCase }) { } function func({ camelCase = "default value" }) { }',
   );
 
-  assertEquals(diagnostics.length, 1);
+  assertEquals(diagnostics.length, 2);
   {
     const d = diagnostics[0];
     assertEquals(d.id, ID);
@@ -627,6 +627,21 @@ Deno.test("function param object destruct invalid", () => {
         key_name: "camelCase",
         value_name: null,
         has_default: false,
+        in_var_declarator: false,
+      }),
+    );
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("camelCase"));
+    assertEquals(
+      d.hint,
+      to_hint("camelCase", {
+        key_name: "camelCase",
+        value_name: null,
+        has_default: true,
         in_var_declarator: false,
       }),
     );

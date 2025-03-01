@@ -371,7 +371,15 @@ const check_pat = (
                   break;
                 }
                 case "Literal":
-                  //ignore
+                  //todo: should be assignment pattern
+                  if (key.type === "Identifier") {
+                    check_ident_snake_cased(key, context, {
+                      key_name: string_repr(key) ?? "[KEY]",
+                      value_name: null,
+                      has_default: true,
+                      in_var_declarator: typeof kind !== "undefined",
+                    });
+                  }
                   break;
                 default:
                   //ignore
