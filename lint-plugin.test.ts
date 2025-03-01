@@ -708,3 +708,44 @@ Deno.test("type alias invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
 });
+
+Deno.test("interface valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "interface ValidInterface { prop_valid: number, method_valid(): void };",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("interface invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "interface invalidInterface { propInvalid: number, methodInvalid(): void };",
+  );
+
+  assertEquals(diagnostics.length, 3);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("invalidInterface"));
+    assertEquals(d.hint, to_hint("invalidInterface", "interface"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("propInvalid"));
+    assertEquals(d.hint, to_hint("propInvalid", "object_key"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[2];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("methodInvalid"));
+    assertEquals(d.hint, to_hint("methodInvalid", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});

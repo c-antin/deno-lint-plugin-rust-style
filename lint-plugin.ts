@@ -151,6 +151,7 @@ export type IdentToCheck =
   | "object_key"
   | "object_key_shorthand"
   | "type_alias"
+  | "interface"
   | ObjectPat;
 
 export const to_message = (
@@ -177,6 +178,7 @@ export const to_hint = (
     case "component":
     case "class":
     case "type_alias":
+    case "interface":
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
@@ -599,6 +601,12 @@ export default {
           TSTypeAliasDeclaration(node) {
             check_ident_upper_camel_cased(node.id, context, "type_alias");
             check_ts_type(node.typeAnnotation, context);
+          },
+          TSInterfaceDeclaration(node) {
+            check_ident_upper_camel_cased(node.id, context, "interface");
+            for (const ty_el of node.body.body) {
+              check_ts_type_element(ty_el, context);
+            }
           },
         };
       },
