@@ -1,20 +1,32 @@
 //based on https://github.com/c-antin/deno_lint/blob/rust_style/src/rules/rust_style.rs
 //which is based on https://github.com/denoland/deno_lint/blob/main/src/rules/camelcase.rs
 
+/**
+ * Checks if the identifier is snake_cased.
+ */
 export const is_snake_cased = (ident_name: string): boolean => {
   return !/[A-Z]/.test(ident_name);
 };
 
+/**
+ * Checks if the identifier is SCREAMING_SNAKE_CASED.
+ */
 export const is_screaming_snake_cased = (ident_name: string): boolean => {
   return !/[a-z]/.test(ident_name);
 };
 
+/**
+ * Checks if the identifier is underscored.
+ */
 export const is_underscored = (ident_name: string): boolean => {
   const trimmed_ident = ident_name.replaceAll(/^_+|_+$/g, "");
   return /_/.test(trimmed_ident) &&
     trimmed_ident != trimmed_ident.toUpperCase();
 };
 
+/**
+ * Checks if the identifier is UpperCamelCased/PascalCased.
+ */
 export const is_upper_camel_cased = (ident_name: string): boolean => {
   if (is_underscored(ident_name)) {
     return false;
@@ -22,6 +34,9 @@ export const is_upper_camel_cased = (ident_name: string): boolean => {
   return /^[A-Z]/.test(ident_name);
 };
 
+/**
+ * Converts the identifier to snake_case.
+ */
 export const to_snake_case = (ident_name: string): string => {
   const result = ident_name.replaceAll(
     /([a-z])([A-Z])/g,
@@ -37,6 +52,9 @@ export const to_snake_case = (ident_name: string): string => {
   return ident_name.toLowerCase();
 };
 
+/**
+ * Converts the identifier to camelCase.
+ */
 export const to_camel_case = (ident_name: string): string => {
   if (!is_underscored(ident_name)) {
     return ident_name;
@@ -56,6 +74,9 @@ export const to_camel_case = (ident_name: string): string => {
   return ident_name.toUpperCase();
 };
 
+/**
+ * Converts the identifier to UpperCamelCase/PascalCase.
+ */
 export const to_upper_camel_case = (ident_name: string): string => {
   const camel_cased = to_camel_case(ident_name);
 
@@ -101,12 +122,18 @@ export type IdentToCheck =
   | "enum_variant"
   | ObjectPat;
 
+/**
+ * Returns the message for the rule.
+ */
 export const to_message = (
   name: string,
 ): string => {
   return `Identifier '${name}' is not in rust style.`;
 };
 
+/**
+ * Returns the hint for the rule depending on the identifier type.
+ */
 export const to_hint = (
   name: string,
   ident_type: IdentToCheck,
@@ -585,6 +612,9 @@ const create_visitor = (
   };
 };
 
+/**
+ * A lint rule to check if the identifiers are in rust style.
+ */
 export default {
   name: "lint-plugin-rust-style",
   rules: {
