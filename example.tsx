@@ -5,7 +5,6 @@ export * as camelCased from "mod.ts";
 
 function doSomething() {}
 let firstName = "Ichigo";
-firstName = "Ichigo";
 const obj1 = { lastName: "Hoshimiya" };
 const obj2 = { firstName };
 
@@ -45,6 +44,7 @@ export * as not_camel_cased from "mod.ts";
 function do_something() {} // function declarations must be snake_case but...
 doSomething(); // ...camel_case function calls are allowed
 {
+  firstName = "Ichigo";
   let first_name = "Ichigo";
   first_name = "Ichigo";
   const FIRST_NAME = "Ichigo";
