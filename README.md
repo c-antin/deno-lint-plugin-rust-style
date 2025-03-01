@@ -1,3 +1,5 @@
+Disclaimer: The innards of lint plugins are still evolving, this plugin works with Deno 2.2.2.
+
 Enforces the use of Rust-style naming conventions, see
 https://rust-lang.github.io/api-guidelines/naming.html
 
