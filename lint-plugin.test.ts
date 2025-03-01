@@ -1,33 +1,9 @@
 import { assert, assertEquals } from "jsr:@std/assert";
 import plugin, { to_hint, to_message } from "./lint-plugin.ts";
 
-//todo: check fixes
+//todo: check fixes once they are correctly typed
 
 const ID = "lint-plugin-rust-style/rust-style";
-
-Deno.test.ignore("valid assignment", () => {
-  const diagnostics = Deno.lint.runPlugin(
-    plugin,
-    "main.tsx",
-    'valid_assignment = "Ichigo";',
-  );
-
-  assertEquals(diagnostics.length, 0);
-});
-
-Deno.test.ignore("invalid assignment", () => {
-  const diagnostics = Deno.lint.runPlugin(
-    plugin,
-    "main.tsx",
-    'invalidAssignment = "Ichigo";',
-  );
-
-  assertEquals(diagnostics.length, 1);
-  const d = diagnostics[0];
-  assertEquals(d.id, ID);
-  assertEquals(d.message, to_message("invalidAssignment"));
-  assert(typeof d.fix !== "undefined");
-});
 
 Deno.test("class prop valid", () => {
   const diagnostics = Deno.lint.runPlugin(

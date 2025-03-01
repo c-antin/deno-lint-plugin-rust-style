@@ -1,63 +1,6 @@
 //based on https://github.com/c-antin/deno_lint/blob/rust_style/src/rules/rust_style.rs
 //which is based on https://github.com/denoland/deno_lint/blob/main/src/rules/camelcase.rs
 
-//todo: cleanup
-// loosely based on DestructuringFinder https://github.com/swc-project/swc/blob/e74929c01d2d8b9001bbc056f20ca8e1cb1c9a63/crates/swc_ecma_utils/src/lib.rs#L1520
-const find_lhs_pat_ids = (
-  arr: (
-    | Deno.lint.Identifier
-    | Deno.lint.ArrayPattern
-    | Deno.lint.ObjectPattern
-    | Deno.lint.MemberExpression
-    | Deno.lint.AssignmentPattern
-    | Deno.lint.RestElement
-    | Deno.lint.Property
-    | null
-  )[],
-): Deno.lint.Identifier[] => {
-  return arr.flatMap((n) => {
-    if (n === null) return [];
-    switch (n.type) {
-      case "Identifier":
-        return [n];
-      case "ArrayPattern":
-        return find_lhs_pat_ids(n.elements);
-      case "ObjectPattern":
-        return find_lhs_pat_ids(n.properties);
-      case "MemberExpression":
-        //ignore member expression for now
-        return [];
-      case "AssignmentPattern":
-        return find_lhs_ids(n.left);
-      case "RestElement":
-        return find_lhs_pat_ids([n.argument]);
-      case "Property": {
-        //ignore key
-        switch (n.value.type) {
-          case "AssignmentPattern":
-            return find_lhs_ids(n.value.left);
-          case "TSEmptyBodyFunctionExpression":
-            return [];
-          default:
-            return find_lhs_ids(n.value);
-        }
-      }
-    }
-  });
-};
-
-const find_lhs_ids = (n: Deno.lint.Expression): Deno.lint.Identifier[] => {
-  switch (n.type) {
-    case "Identifier":
-      return [n];
-    case "ArrayPattern":
-      return find_lhs_pat_ids(n.elements);
-    case "ObjectPattern":
-      return find_lhs_pat_ids(n.properties);
-  }
-  return [];
-};
-
 //todo: test helper functions
 const is_snake_cased = (ident_name: string) => {
   return !/[A-Z]/.test(ident_name);
@@ -468,13 +411,6 @@ export default {
     "rust-style": {
       create(context) {
         return {
-          // assignment expression can be arbitrary, the declaration is what matters
-          // AssignmentExpression(node) {
-          //   const ids = find_lhs_ids(node.left);
-          //   for (const id of ids) {
-          //     check_ident_snake_cased(id, context, "variable");
-          //   }
-          // },
           "ClassBody PropertyDefinition"(node) { //todo: >; PrivateIdentifier
             if (node.key.type !== "Identifier") return;
             if (node.static) {
