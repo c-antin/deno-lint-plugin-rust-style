@@ -1,4 +1,8 @@
+## Deno Lint Plugin Rust-style
+
 Disclaimer: The innards of lint plugins are still evolving, this plugin works with Deno 2.2.2.
+
+Credits: This rule is based on the deno built-in camelcase rule.
 
 Enforces the use of Rust-style naming conventions, see
 https://rust-lang.github.io/api-guidelines/naming.html

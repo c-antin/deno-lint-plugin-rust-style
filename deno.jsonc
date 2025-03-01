@@ -7,7 +7,7 @@
     "plugins": ["./lint-plugin.ts"]
   },
   "name": "@c-antin/lint-plugin-rust-style",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "license": "MIT",
   "exports": "./lint-plugin.ts"
 }
