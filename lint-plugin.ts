@@ -1,3 +1,6 @@
+//based on https://github.com/c-antin/deno_lint/blob/rust_style/src/rules/rust_style.rs
+//which is based on https://github.com/denoland/deno_lint/blob/main/src/rules/camelcase.rs
+
 //todo: cleanup
 // loosely based on DestructuringFinder https://github.com/swc-project/swc/blob/e74929c01d2d8b9001bbc056f20ca8e1cb1c9a63/crates/swc_ecma_utils/src/lib.rs#L1520
 const find_lhs_pat_ids = (
