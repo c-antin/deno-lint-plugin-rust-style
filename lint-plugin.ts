@@ -1,29 +1,28 @@
 //based on https://github.com/c-antin/deno_lint/blob/rust_style/src/rules/rust_style.rs
 //which is based on https://github.com/denoland/deno_lint/blob/main/src/rules/camelcase.rs
 
-//todo: test helper functions
-const is_snake_cased = (ident_name: string) => {
+export const is_snake_cased = (ident_name: string) => {
   return !/[A-Z]/.test(ident_name);
 };
 
-const is_screaming_snake_cased = (ident_name: string) => {
+export const is_screaming_snake_cased = (ident_name: string) => {
   return !/[a-z]/.test(ident_name);
 };
 
-const is_underscored = (ident_name: string) => {
+export const is_underscored = (ident_name: string) => {
   const trimmed_ident = ident_name.replaceAll(/^_+|_+$/g, "");
   return /_/.test(trimmed_ident) &&
     trimmed_ident != trimmed_ident.toUpperCase();
 };
 
-const is_upper_camel_cased = (ident_name: string) => {
+export const is_upper_camel_cased = (ident_name: string) => {
   if (is_underscored(ident_name)) {
     return false;
   }
   return /^[A-Z]/.test(ident_name);
 };
 
-const to_snake_case = (ident_name: string) => {
+export const to_snake_case = (ident_name: string) => {
   const result = ident_name.replaceAll(
     /([a-z])([A-Z])/g,
     (_match, caps1, caps2) => {
@@ -38,7 +37,7 @@ const to_snake_case = (ident_name: string) => {
   return ident_name.toLowerCase();
 };
 
-const to_camel_case = (ident_name: string) => {
+export const to_camel_case = (ident_name: string) => {
   if (!is_underscored(ident_name)) {
     return ident_name;
   }
@@ -57,7 +56,7 @@ const to_camel_case = (ident_name: string) => {
   return ident_name.toUpperCase();
 };
 
-const to_upper_camel_case = (ident_name: string) => {
+export const to_upper_camel_case = (ident_name: string) => {
   const camel_cased = to_camel_case(ident_name);
 
   const result = camel_cased.replace(/^_*[a-z]/, (match) => {

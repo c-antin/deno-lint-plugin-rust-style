@@ -1,9 +1,156 @@
 import { assert, assertEquals } from "jsr:@std/assert";
-import plugin, { to_hint, to_message } from "./lint-plugin.ts";
+import plugin, {
+  is_screaming_snake_cased,
+  is_snake_cased,
+  is_underscored,
+  is_upper_camel_cased,
+  to_camel_case,
+  to_hint,
+  to_message,
+  to_snake_case,
+  to_upper_camel_case,
+} from "./lint-plugin.ts";
 
 //todo: check fixes once they are correctly typed
 
 const ID = "lint-plugin-rust-style/rust-style";
+
+Deno.test("is_underscored", () => {
+  const tests: [string, boolean][] = [
+    ["foo_bar", true], //snake
+    ["fooBar", false], //camel
+    ["FooBar", false], //upper camel
+    ["foo_bar_baz", true], //snake
+    ["_foo_bar_baz", true], //snake
+    ["__foo_bar_baz__", true], //snake
+    ["__fooBar_baz__", true], //snake
+    ["__fooBarBaz__", false], //camel
+    ["Sha3_224", true], //not snake
+    ["SHA3_224", false], //screaming snake
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, is_underscored(input));
+  }
+});
+
+Deno.test("is_snake_cased", () => {
+  const tests: [string, boolean][] = [
+    ["foo_bar", true], //snake
+    ["fooBar", false], //camel
+    ["FooBar", false], //upper camel
+    ["foo_bar_baz", true], //snake
+    ["_foo_bar_baz", true], //snake
+    ["__foo_bar_baz__", true], //snake
+    ["__fooBar_baz__", false], //not snake
+    ["__fooBarBaz__", false], //camel
+    ["Sha3_224", false], //not snake
+    ["SHA3_224", false], //screaming snake
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, is_snake_cased(input));
+  }
+});
+
+Deno.test("is_screaming_snake_cased", () => {
+  const tests: [string, boolean][] = [
+    ["foo_bar", false], //snake
+    ["fooBar", false], //camel
+    ["FooBar", false], //upper camel
+    ["foo_bar_baz", false], //snake
+    ["_foo_bar_baz", false], //snake
+    ["__foo_bar_baz__", false], //snake
+    ["__fooBar_baz__", false], //not snake
+    ["__fooBarBaz__", false], //camel
+    ["Sha3_224", false], //not snake
+    ["SHA3_224", true], //screaming snake
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, is_screaming_snake_cased(input));
+  }
+});
+
+Deno.test("is_upper_camel_cased", () => {
+  const tests: [string, boolean][] = [
+    ["foo_bar", false], //snake
+    ["fooBar", false], //camel
+    ["FooBar", true], //upper camel
+    ["foo_bar_baz", false], //snake
+    ["_foo_bar_baz", false], //snake
+    ["__foo_bar_baz__", false], //snake
+    ["__fooBar_baz__", false], //not snake
+    ["__fooBarBaz__", false], //camel
+    ["Sha3_224", false], //not snake
+    ["SHA3_224", true], //screaming snake; todo: ?should this be true?
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, is_upper_camel_cased(input));
+  }
+});
+
+Deno.test("to_camel_case", () => {
+  const tests: [string, string][] = [
+    ["foo_bar", "fooBar"],
+    ["fooBar", "fooBar"],
+    ["FooBar", "FooBar"],
+    ["foo_bar_baz", "fooBarBaz"],
+    ["_foo_bar_baz", "_fooBarBaz"],
+    ["__foo_bar_baz__", "__fooBarBaz__"],
+    ["Sha3_224", "SHA3_224"],
+    ["SHA3_224", "SHA3_224"],
+    ["_leading", "_leading"],
+    ["trailing_", "trailing_"],
+    ["_bothEnds_", "_bothEnds_"],
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, to_camel_case(input));
+  }
+});
+
+Deno.test("to_snake_case", () => {
+  const tests: [string, string][] = [
+    ["fooBar", "foo_bar"],
+    ["foo_bar", "foo_bar"],
+    ["FooBar", "foo_bar"],
+    ["_FooBar", "_foo_bar"],
+    ["fooBarBaz", "foo_bar_baz"],
+    ["_fooBarBaz", "_foo_bar_baz"],
+    ["__fooBarBaz__", "__foo_bar_baz__"],
+    ["Sha3_224", "sha3_224"],
+    ["SHA3_224", "sha3_224"],
+    ["_leadingCamel", "_leading_camel"],
+    ["trailingCamel_", "trailing_camel_"],
+    ["_bothendsCamel_", "_bothends_camel_"],
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, to_snake_case(input));
+  }
+});
+
+Deno.test("to_upper_camel_case", () => {
+  const tests: [string, string][] = [
+    ["foo_bar", "FooBar"],
+    ["fooBar", "FooBar"],
+    ["FooBar", "FooBar"],
+    ["foo_bar_baz", "FooBarBaz"],
+    ["_foo_bar_baz", "_FooBarBaz"],
+    ["__foo_bar_baz__", "__FooBarBaz__"],
+    ["Sha3_224", "SHA3_224"],
+    ["SHA3_224", "SHA3_224"],
+    ["_leading", "_Leading"],
+    ["trailing_", "Trailing_"],
+    ["_bothEnds_", "_BothEnds_"],
+  ];
+
+  for (const [input, expected] of tests) {
+    assertEquals(expected, to_upper_camel_case(input));
+  }
+});
 
 Deno.test("class prop valid", () => {
   const diagnostics = Deno.lint.runPlugin(
