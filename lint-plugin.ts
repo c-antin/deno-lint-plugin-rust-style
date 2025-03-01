@@ -330,7 +330,12 @@ const check_pat = (
             const value = prop.value;
             if (value === null) { //todo: apparently this is possible
               if (key.type === "Identifier" && typeof kind === "undefined") { //todo: apparently this is possible, too
-                check_ident_snake_cased(key, context, "variable");
+                check_ident_snake_cased(key, context, {
+                  key_name: string_repr(key) ?? "[KEY]",
+                  value_name: null,
+                  has_default: false,
+                  in_var_declarator: false,
+                });
               }
             } else {
               switch (value.type) {
@@ -429,7 +434,16 @@ export default {
             } else {
               check_ident_snake_cased(node.id, context, "function");
             }
-            //todo: check arrow params
+            for (const param of node.params) {
+              check_pat(param, context);
+            }
+          },
+          FunctionExpression(node) {
+            for (const param of node.params) {
+              check_pat(param, context);
+            }
+          },
+          ArrowFunctionExpression(node) {
             for (const param of node.params) {
               check_pat(param, context);
             }

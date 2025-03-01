@@ -621,7 +621,49 @@ Deno.test("function param object destruct invalid", () => {
     const d = diagnostics[0];
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("camelCase"));
-    assertEquals(d.hint, to_hint("camelCase", "variable"));
+    assertEquals(
+      d.hint,
+      to_hint("camelCase", {
+        key_name: "camelCase",
+        value_name: null,
+        has_default: false,
+        in_var_declarator: false,
+      }),
+    );
+    assert(typeof d.fix !== "undefined");
+  }
+});
+
+Deno.test("function expression param valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "test(function ({ param_valid }) { }); test(({ param_valid }) => { });",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("function expression param invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "test(function ({ paramInvalid }) { }); test(({ paramInvalid }) => { });",
+  );
+
+  assertEquals(diagnostics.length, 2);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("paramInvalid"));
+    assertEquals(d.hint, to_hint("paramInvalid", "variable"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("paramInvalid"));
+    assertEquals(d.hint, to_hint("paramInvalid", "variable"));
     assert(typeof d.fix !== "undefined");
   }
 });
