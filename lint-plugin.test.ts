@@ -349,12 +349,27 @@ Deno.test("variable object pattern invalid", () => {
   const diagnostics = Deno.lint.runPlugin(
     plugin,
     "main.tsx",
-    "const {aValid, bValid = 2, cValid: cInvalid, dValid: dInvalid = 4, ...restInvalid} = obj;",
+    "const {aValid, bInvalid = 2, cValid: cInvalid, dValid: dInvalid = 4, ...restInvalid} = obj;",
   );
 
-  assertEquals(diagnostics.length, 3);
+  assertEquals(diagnostics.length, 4);
   {
     const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("bInvalid"));
+    assertEquals(
+      d.hint,
+      to_hint("bInvalid", {
+        key_name: "bInvalid",
+        value_name: null,
+        has_default: true,
+        in_var_declarator: true,
+      }),
+    );
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("cInvalid"));
     assertEquals(
@@ -369,7 +384,7 @@ Deno.test("variable object pattern invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
   {
-    const d = diagnostics[1];
+    const d = diagnostics[2];
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("dInvalid"));
     assertEquals(
@@ -384,7 +399,7 @@ Deno.test("variable object pattern invalid", () => {
     assert(typeof d.fix !== "undefined");
   }
   {
-    const d = diagnostics[2];
+    const d = diagnostics[3];
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("restInvalid"));
     assertEquals(d.hint, to_hint("restInvalid", "variable_or_constant"));
