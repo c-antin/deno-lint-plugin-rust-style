@@ -155,6 +155,8 @@ export type IdentToCheck =
   | "object_key_shorthand"
   | "type_alias"
   | "interface"
+  | "enum_name"
+  | "enum_variant"
   | ObjectPat;
 
 export const to_message = (
@@ -182,6 +184,8 @@ export const to_hint = (
     case "class":
     case "type_alias":
     case "interface":
+    case "enum_name":
+    case "enum_variant":
       return `Consider renaming \`${name}\` to \`${
         to_upper_camel_case(name)
       }\`.`;
@@ -617,6 +621,19 @@ export default {
             check_ident_upper_camel_cased(node.id, context, "interface");
             for (const ty_el of node.body.body) {
               check_ts_type_element(ty_el, context);
+            }
+          },
+          //todo: ?namespace module?
+          TSEnumDeclaration(node) {
+            check_ident_upper_camel_cased(node.id, context, "enum_name");
+            for (const variant of node.body.members) {
+              if (variant.id.type === "Identifier") {
+                check_ident_upper_camel_cased(
+                  variant.id,
+                  context,
+                  "enum_variant",
+                );
+              }
             }
           },
         };

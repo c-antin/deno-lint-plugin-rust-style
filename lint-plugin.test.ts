@@ -1,6 +1,8 @@
 import { assert, assertEquals } from "jsr:@std/assert";
 import plugin, { to_hint, to_message } from "./lint-plugin.ts";
 
+//todo: check fixes
+
 const ID = "lint-plugin-rust-style/rust-style";
 
 Deno.test.ignore("valid assignment", () => {
@@ -761,6 +763,40 @@ Deno.test("interface invalid", () => {
     assertEquals(d.id, ID);
     assertEquals(d.message, to_message("methodInvalid"));
     assertEquals(d.hint, to_hint("methodInvalid", "function"));
+    assert(typeof d.fix !== "undefined");
+  }
+});
+
+Deno.test("enum valid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "enum ValidEnum { VariantValid: 1};",
+  );
+
+  assertEquals(diagnostics.length, 0);
+});
+
+Deno.test("enum invalid", () => {
+  const diagnostics = Deno.lint.runPlugin(
+    plugin,
+    "main.tsx",
+    "enum invalidEnum { variantInvalid: 1};",
+  );
+
+  assertEquals(diagnostics.length, 2);
+  {
+    const d = diagnostics[0];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("invalidEnum"));
+    assertEquals(d.hint, to_hint("invalidEnum", "enum_name"));
+    assert(typeof d.fix !== "undefined");
+  }
+  {
+    const d = diagnostics[1];
+    assertEquals(d.id, ID);
+    assertEquals(d.message, to_message("variantInvalid"));
+    assertEquals(d.hint, to_hint("variantInvalid", "enum_variant"));
     assert(typeof d.fix !== "undefined");
   }
 });
