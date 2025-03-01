@@ -27,6 +27,8 @@ const obj2 = { firstName };
 
 function doSomething() {}
 function foo({ camelCase = "default value" }) {}
+function Component() {}
+function component(): JSX.Element {}
 
 class snake_case_class {}
 class camelCaseClass {}
@@ -70,6 +72,7 @@ const { lastName: last_name } = obj;
 function do_something() {} // function declarations must be snake_case but...
 doSomething(); // ...camel_case function calls are allowed
 function foo({ camelCase: snake_case = "default value" }) {}
+function Component(): JSX.Element {}
 
 class PascalCaseClass {}
 
