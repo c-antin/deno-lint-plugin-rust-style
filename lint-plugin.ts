@@ -1,28 +1,28 @@
 //based on https://github.com/c-antin/deno_lint/blob/rust_style/src/rules/rust_style.rs
 //which is based on https://github.com/denoland/deno_lint/blob/main/src/rules/camelcase.rs
 
-export const is_snake_cased = (ident_name: string) => {
+export const is_snake_cased = (ident_name: string): boolean => {
   return !/[A-Z]/.test(ident_name);
 };
 
-export const is_screaming_snake_cased = (ident_name: string) => {
+export const is_screaming_snake_cased = (ident_name: string): boolean => {
   return !/[a-z]/.test(ident_name);
 };
 
-export const is_underscored = (ident_name: string) => {
+export const is_underscored = (ident_name: string): boolean => {
   const trimmed_ident = ident_name.replaceAll(/^_+|_+$/g, "");
   return /_/.test(trimmed_ident) &&
     trimmed_ident != trimmed_ident.toUpperCase();
 };
 
-export const is_upper_camel_cased = (ident_name: string) => {
+export const is_upper_camel_cased = (ident_name: string): boolean => {
   if (is_underscored(ident_name)) {
     return false;
   }
   return /^[A-Z]/.test(ident_name);
 };
 
-export const to_snake_case = (ident_name: string) => {
+export const to_snake_case = (ident_name: string): string => {
   const result = ident_name.replaceAll(
     /([a-z])([A-Z])/g,
     (_match, caps1, caps2) => {
@@ -37,7 +37,7 @@ export const to_snake_case = (ident_name: string) => {
   return ident_name.toLowerCase();
 };
 
-export const to_camel_case = (ident_name: string) => {
+export const to_camel_case = (ident_name: string): string => {
   if (!is_underscored(ident_name)) {
     return ident_name;
   }
@@ -56,7 +56,7 @@ export const to_camel_case = (ident_name: string) => {
   return ident_name.toUpperCase();
 };
 
-export const to_upper_camel_case = (ident_name: string) => {
+export const to_upper_camel_case = (ident_name: string): string => {
   const camel_cased = to_camel_case(ident_name);
 
   const result = camel_cased.replace(/^_*[a-z]/, (match) => {
@@ -103,14 +103,14 @@ export type IdentToCheck =
 
 export const to_message = (
   name: string,
-) => {
+): string => {
   return `Identifier '${name}' is not in rust style.`;
 };
 
 export const to_hint = (
   name: string,
   ident_type: IdentToCheck,
-) => {
+): string | null => {
   switch (ident_type) {
     case "variable":
       return `Consider renaming \`${name}\` to \`${to_snake_case(name)}\`.`;
@@ -404,136 +404,82 @@ const check_ts_type = (
   }
 };
 
-export default {
-  name: "lint-plugin-rust-style",
-  rules: {
-    "rust-style": {
-      create(context) {
-        return {
-          "ClassBody PropertyDefinition"(node) { //todo: >; PrivateIdentifier
-            if (node.key.type !== "Identifier") return;
-            if (node.static) {
-              check_ident_snake_cased_or_screaming_snake_cased(
-                node.key,
-                context,
-                "variable_or_constant",
-              );
-            } else {
-              check_ident_snake_cased(node.key, context, "variable");
-            }
-          },
-          "ClassBody MethodDefinition"(node) { //todo: >
-            if (
-              node.key.type !== "Identifier" &&
-              node.key.type !== "PrivateIdentifier"
-            ) return;
-            check_ident_snake_cased(node.key, context, "function");
-          },
-          FunctionDeclaration(node) {
-            if (node.id === null) return;
-            if (
-              typeof node.returnType !== "undefined" &&
-              /\.tsx$/.test(context.filename) &&
-              has_jsx_element_return_type(node.returnType)
-            ) {
-              check_ident_upper_camel_cased(node.id, context, "component");
-            } else {
-              check_ident_snake_cased(node.id, context, "function");
-            }
-            for (const param of node.params) {
-              check_pat(param, context);
-            }
-          },
-          FunctionExpression(node) {
-            for (const param of node.params) {
-              check_pat(param, context);
-            }
-          },
-          ArrowFunctionExpression(node) {
-            for (const param of node.params) {
-              check_pat(param, context);
-            }
-          },
-          ClassDeclaration(node) {
-            if (node.id === null) return;
-            check_ident_upper_camel_cased(node.id, context, "class");
-          },
-          VariableDeclaration(node) {
-            for (const decl of node.declarations) {
-              let checked_ident = false;
+const create_visitor = (
+  context: Deno.lint.RuleContext,
+): Deno.lint.LintVisitor => {
+  return {
+    "ClassBody PropertyDefinition"(node) { //todo: >; PrivateIdentifier
+      if (node.key.type !== "Identifier") return;
+      if (node.static) {
+        check_ident_snake_cased_or_screaming_snake_cased(
+          node.key,
+          context,
+          "variable_or_constant",
+        );
+      } else {
+        check_ident_snake_cased(node.key, context, "variable");
+      }
+    },
+    "ClassBody MethodDefinition"(node) { //todo: >
+      if (
+        node.key.type !== "Identifier" &&
+        node.key.type !== "PrivateIdentifier"
+      ) return;
+      check_ident_snake_cased(node.key, context, "function");
+    },
+    FunctionDeclaration(node) {
+      if (node.id === null) return;
+      if (
+        typeof node.returnType !== "undefined" &&
+        /\.tsx$/.test(context.filename) &&
+        has_jsx_element_return_type(node.returnType)
+      ) {
+        check_ident_upper_camel_cased(node.id, context, "component");
+      } else {
+        check_ident_snake_cased(node.id, context, "function");
+      }
+      for (const param of node.params) {
+        check_pat(param, context);
+      }
+    },
+    FunctionExpression(node) {
+      for (const param of node.params) {
+        check_pat(param, context);
+      }
+    },
+    ArrowFunctionExpression(node) {
+      for (const param of node.params) {
+        check_pat(param, context);
+      }
+    },
+    ClassDeclaration(node) {
+      if (node.id === null) return;
+      check_ident_upper_camel_cased(node.id, context, "class");
+    },
+    VariableDeclaration(node) {
+      for (const decl of node.declarations) {
+        let checked_ident = false;
 
-              if (decl.init !== null) {
-                switch (decl.init.type) {
-                  case "ObjectExpression":
-                    for (const prop of decl.init.properties) {
-                      switch (prop.type) {
-                        case "Property":
-                          if (prop.key.type === "Identifier") {
-                            if (prop.shorthand) {
-                              check_ident_snake_cased(
-                                prop.key,
-                                context,
-                                "object_key_shorthand",
-                              );
-                            } else {
-                              check_ident_snake_cased(
-                                prop.key,
-                                context,
-                                "object_key",
-                              );
-                            }
-                          }
-                          break;
-                        default:
-                          //ignore
-                          break;
-                      }
-                    }
-                    break;
-                  case "FunctionExpression":
-                  case "ArrowFunctionExpression":
-                    if (
-                      decl.init.id !== null &&
-                      typeof decl.init.id !== "undefined"
-                    ) {
-                      check_ident_snake_cased(
-                        decl.init.id,
-                        context,
-                        "function",
-                      );
-                    }
-                    if (decl.id.type === "Identifier") {
-                      const node = decl.init;
-                      if (
-                        typeof node.returnType !== "undefined" &&
-                        /\.tsx$/.test(context.filename) &&
-                        has_jsx_element_return_type(node.returnType)
-                      ) {
-                        check_ident_upper_camel_cased(
-                          decl.id,
+        if (decl.init !== null) {
+          switch (decl.init.type) {
+            case "ObjectExpression":
+              for (const prop of decl.init.properties) {
+                switch (prop.type) {
+                  case "Property":
+                    if (prop.key.type === "Identifier") {
+                      if (prop.shorthand) {
+                        check_ident_snake_cased(
+                          prop.key,
                           context,
-                          "component",
+                          "object_key_shorthand",
                         );
                       } else {
-                        check_ident_snake_cased(decl.id, context, "function");
+                        check_ident_snake_cased(
+                          prop.key,
+                          context,
+                          "object_key",
+                        );
                       }
-                      checked_ident = true;
-                    }
-                    break;
-                  case "ClassExpression":
-                    if (
-                      decl.init.id !== null &&
-                      typeof decl.init.id !== "undefined"
-                    ) {
-                      check_ident_upper_camel_cased(
-                        decl.init.id,
-                        context,
-                        "class",
-                      );
-                    }
-                    if (decl.id.type === "Identifier") {
-                      check_ident_upper_camel_cased(decl.id, context, "class");
-                      checked_ident = true;
                     }
                     break;
                   default:
@@ -541,51 +487,109 @@ export default {
                     break;
                 }
               }
-
-              if (!checked_ident) {
-                check_pat(decl.id, context, node.kind);
-              }
-            }
-          },
-          //todo: import
-          ExportAllDeclaration(node) {
-            //todo: exported and source are swapped
-            const exported = node.source as unknown as
-              | Deno.lint.Identifier
-              | null;
-            if (exported?.type === "Identifier") {
-              check_ident_snake_cased_or_screaming_snake_cased(
-                exported,
-                context,
-                "variable_or_constant",
-              );
-            }
-          },
-          TSTypeAliasDeclaration(node) {
-            check_ident_upper_camel_cased(node.id, context, "type_alias");
-            check_ts_type(node.typeAnnotation, context);
-          },
-          TSInterfaceDeclaration(node) {
-            check_ident_upper_camel_cased(node.id, context, "interface");
-            for (const ty_el of node.body.body) {
-              check_ts_type_element(ty_el, context);
-            }
-          },
-          //todo: ?namespace module?
-          TSEnumDeclaration(node) {
-            check_ident_upper_camel_cased(node.id, context, "enum_name");
-            for (const variant of node.body.members) {
-              if (variant.id.type === "Identifier") {
-                check_ident_upper_camel_cased(
-                  variant.id,
+              break;
+            case "FunctionExpression":
+            case "ArrowFunctionExpression":
+              if (
+                decl.init.id !== null &&
+                typeof decl.init.id !== "undefined"
+              ) {
+                check_ident_snake_cased(
+                  decl.init.id,
                   context,
-                  "enum_variant",
+                  "function",
                 );
               }
-            }
-          },
-        };
-      },
+              if (decl.id.type === "Identifier") {
+                const node = decl.init;
+                if (
+                  typeof node.returnType !== "undefined" &&
+                  /\.tsx$/.test(context.filename) &&
+                  has_jsx_element_return_type(node.returnType)
+                ) {
+                  check_ident_upper_camel_cased(
+                    decl.id,
+                    context,
+                    "component",
+                  );
+                } else {
+                  check_ident_snake_cased(decl.id, context, "function");
+                }
+                checked_ident = true;
+              }
+              break;
+            case "ClassExpression":
+              if (
+                decl.init.id !== null &&
+                typeof decl.init.id !== "undefined"
+              ) {
+                check_ident_upper_camel_cased(
+                  decl.init.id,
+                  context,
+                  "class",
+                );
+              }
+              if (decl.id.type === "Identifier") {
+                check_ident_upper_camel_cased(decl.id, context, "class");
+                checked_ident = true;
+              }
+              break;
+            default:
+              //ignore
+              break;
+          }
+        }
+
+        if (!checked_ident) {
+          check_pat(decl.id, context, node.kind);
+        }
+      }
+    },
+    //todo: import
+    ExportAllDeclaration(node) {
+      //todo: exported and source are swapped
+      const exported = node.source as unknown as
+        | Deno.lint.Identifier
+        | null;
+      if (exported?.type === "Identifier") {
+        check_ident_snake_cased_or_screaming_snake_cased(
+          exported,
+          context,
+          "variable_or_constant",
+        );
+      }
+    },
+    TSTypeAliasDeclaration(node) {
+      check_ident_upper_camel_cased(node.id, context, "type_alias");
+      check_ts_type(node.typeAnnotation, context);
+    },
+    TSInterfaceDeclaration(node) {
+      check_ident_upper_camel_cased(node.id, context, "interface");
+      for (const ty_el of node.body.body) {
+        check_ts_type_element(ty_el, context);
+      }
+    },
+    //todo: ?namespace module?
+    TSEnumDeclaration(node) {
+      check_ident_upper_camel_cased(node.id, context, "enum_name");
+      for (const variant of node.body.members) {
+        if (variant.id.type === "Identifier") {
+          check_ident_upper_camel_cased(
+            variant.id,
+            context,
+            "enum_variant",
+          );
+        }
+      }
+    },
+  };
+};
+
+export default {
+  name: "lint-plugin-rust-style",
+  rules: {
+    "rust-style": {
+      create: create_visitor,
     },
   },
-} satisfies Deno.lint.Plugin;
+};
