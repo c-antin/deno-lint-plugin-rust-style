@@ -304,34 +304,32 @@ const check_pat = (
     case "ObjectPattern":
       for (const prop of pat.properties) {
         switch (prop.type) {
-          //todo: handle object pat assignment
           case "Property": {
             const key = prop.key;
             const value = prop.value;
-            if (value === null) { //todo: apparently this is possible
-              if (key.type === "Identifier" && typeof kind === "undefined") { //todo: apparently this is possible, too
-                check_ident_snake_cased(key, context, {
-                  key_name: string_repr(key) ?? "[KEY]",
-                  value_name: null,
-                  has_default: false,
-                  in_var_declarator: false,
-                });
-              }
-            } else {
+            if (value !== null) {
               switch (value.type) {
                 case "Identifier":
-                  check_ident_snake_cased(value, context, {
-                    key_name: string_repr(key) ?? "[KEY]",
-                    value_name: value.name,
-                    has_default: false,
-                    in_var_declarator: typeof kind !== "undefined",
-                  });
+                  if (
+                    JSON.stringify(value.range) !== JSON.stringify(key.range) ||
+                    typeof kind === "undefined"
+                  ) {
+                    check_ident_snake_cased(value, context, {
+                      key_name: string_repr(key) ?? "[KEY]",
+                      value_name: value.name,
+                      has_default: false,
+                      in_var_declarator: typeof kind !== "undefined",
+                    });
+                  }
                   break;
                 case "AssignmentPattern":
                   if (value.left.type === "Identifier") {
                     check_ident_snake_cased(value.left, context, {
                       key_name: string_repr(key) ?? "[KEY]",
-                      value_name: value.left.name,
+                      value_name: JSON.stringify(value.left.range) ===
+                          JSON.stringify(key.range)
+                        ? null
+                        : value.left.name,
                       has_default: true,
                       in_var_declarator: typeof kind !== "undefined",
                     });
@@ -343,17 +341,6 @@ const check_pat = (
                   check_pat(value, context, kind);
                   break;
                 }
-                case "Literal":
-                  //todo: should be assignment pattern
-                  if (key.type === "Identifier") {
-                    check_ident_snake_cased(key, context, {
-                      key_name: string_repr(key) ?? "[KEY]",
-                      value_name: null,
-                      has_default: true,
-                      in_var_declarator: typeof kind !== "undefined",
-                    });
-                  }
-                  break;
                 default:
                   //ignore
                   console.info("rust-style: ignored pat value", pat, value);
@@ -574,10 +561,7 @@ const create_visitor = (
     },
     //todo: import
     ExportAllDeclaration(node) {
-      //todo: exported and source are swapped
-      const exported = node.source as unknown as
-        | Deno.lint.Identifier
-        | null;
+      const exported = node.exported;
       if (exported?.type === "Identifier") {
         check_ident_snake_cased_or_screaming_snake_cased(
           exported,
