@@ -1,6 +1,6 @@
 ## Deno Lint Plugin Rust-style
 
-Disclaimer: The innards of lint plugins are still evolving, this plugin works with Deno 2.2.2.
+Disclaimer: The innards of lint plugins are still evolving, this plugin works with Deno 2.2.4.
 
 Credits: This rule is based on the deno built-in camelcase rule.
 
